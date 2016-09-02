@@ -33,7 +33,7 @@ if (!run.on.server) {
 ### CHANGE THIS:
 # Set your working directory, choose one!
 # Note: Reverse the "/" when copying the name of the directory from Windows explorer
-  mydir <- "/Users/admin/Dropbox/*PostDoc2016/ContraceptiveUse"
+  mydir <- "/Users/admin/ContraceptiveUse_MWRA"
   #mydir <- "V:/FertilitySection/R/R code" # Fertility section
 #mydir <- getwd() # LA on server
 #mydir <- "V:/FertilitySection/Methodological issues/Alkema_Joint project on contraceptive use trends/R code/"
@@ -41,7 +41,7 @@ setwd(mydir)
 }
 
 # Specify a run name
-run.name <- "TestRun"
+run.name <- "Run20160822"
 ### END CHANGE
 #------------------------------------------------------------------------
 # 2. Start MCMC run
@@ -73,13 +73,9 @@ sapply(paste0("R/", Rfiles), source)
 
 
 RunMCMC(run.name = run.name, 
-	 data.csv = "data/dataCPmodel.csv", regioninfo.csv = "data/Country-and-area-classification.csv"
-  ,N.ITER = 10,  ##<< Number of iterations, NOT including burn-in.
-  N.STEPS = 1,      ##<< For each N.ITER/N.STEPS iterations, the iterations will be saved. 
-  N.THIN = 1,      ##<< Thinning factor.
-  N.BURNIN = 1, ##<< Burnin (excluded samples at start of chain).
-  ChainNums = seq(1,2)
- ) # for default settings
+        data.csv = "data/dataCPmodel.csv", regioninfo.csv = "data/Country-and-area-classification.csv"
+        ,ChainNums = seq(1,2)
+) # for default settings
 # see the help file of RunMCMC to change settings:
 #?RunMCMC
 

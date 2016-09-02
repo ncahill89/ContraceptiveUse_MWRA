@@ -22,7 +22,7 @@ if (!run.on.server) {
   ### CHANGE THIS:
   # Set your working directory, choose one!
   # Note: Reverse the "/" when copying the name of the directory from Windows explorer
-  mydir <- "/Users/admin/Dropbox/*PostDoc2016/ContraceptiveUse_Original"
+  mydir <- "/Users/admin/ContraceptiveUse_MWRA"
   #mydir <- "V:/FertilitySection/R/R code" # Fertility section
   #mydir <- getwd() # LA on server
   #mydir <- "V:/FertilitySection/Methodological issues/Alkema_Joint project on contraceptive use trends/R code/"
@@ -30,7 +30,7 @@ if (!run.on.server) {
 }
 
 # specify run name
-run.name <- "IndiaStatesALL"
+run.name <- "Run20160822"
 ### END CHANGE
 
 # load libraries
@@ -43,7 +43,6 @@ library(plyr)
 library(proto)
 library(ggplot2)
 library(reshape2)
-# library(ContraceptiveUse)
 
 Rfiles <- list.files(file.path(getwd(), "R"))
 Rfiles <- Rfiles[grepl(".R", Rfiles)]
@@ -78,9 +77,7 @@ ConstructMCMCArray(run.name = run.name)
 #--------------------------------------------------------------------------------
 
 ConstructOutput(run.name = run.name,
-                #MWRA.csv = "data/Number-of-women-married-in union_15-49.csv",
-                MWRA.csv = "data/MWRA_India_by_state_20151118.csv",
-                
+                MWRA.csv = "data/Number-of-women-married-in union_15-49.csv",
                 start.year = 1970.5,
                 end.year = 2035.5) 
 #?ConstructOutput
@@ -113,9 +110,12 @@ ConstructOutput(run.name = run.name,
 # The run.name is added to the name of the figure/csv.
 
 # TIFFS note: by adding the plot.tiff  = TRUE statement, tiffs are produced.
+##Summarize Global Run for FPET
+run.name.global <- run.name
+GlobalSum<-SummariseGlobalRun(run.name = run.name.global)
 
 # Standard output:
- GetAllBarCharts(run.name = run.name)#, plot.tiff  = TRUE)
+GetAllBarCharts(run.name = run.name)#, plot.tiff  = TRUE)
  #GetAllPolar(run.name = run.name)
 
 # Plots of trends over time in props/counts for countries and aggregates
@@ -124,7 +124,9 @@ PlotResults(run.name = run.name,
             # If yes, set this to TRUE, then TIFFS are saved in subfolder in "fig"
             # start.year = 1990.5,
             # end.year = 2020.5,
-            plot.ind.country.results = FALSE)
+            plot.ind.country.results = FALSE,
+            plot.prior.post = FALSE,
+            plot.parameters = TRUE)
 
 # Plots in paper:
  BarChartSubregion(run.name = run.name)#, plot.tiff  = TRUE)
