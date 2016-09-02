@@ -508,12 +508,9 @@ PlotLogisticParameters <- function (# Plot overview of country parameters of the
   yearsRomega.low <- perc/par.ciq[,"Romega.c",3]
   yearsRomega.up <- perc/par.ciq[,"Romega.c",1]
   
-  t0low <- par.ciq[,"T.c",1]
-  t0up <- par.ciq[,"T.c",3]
   Rt0low <- par.ciq[,"RT.c",1]
   Rt0up <- par.ciq[,"RT.c",3]
   Rt0.c <- par.ciq[,"RT.c" ,2]
-  t0.c <- par.ciq[,"T.c",2]
   omega.c <- par.ciq[,"omega.c",2]
   Romega.c <-par.ciq[,"Romega.c",2]
   pmax.c <- par.ciq[,"pmax.c",2]
@@ -524,18 +521,18 @@ PlotLogisticParameters <- function (# Plot overview of country parameters of the
   }
   #----------------------------------------------------------------------------------
   # omega against Tmid  
-  par(mfrow = c(1,2),  mar = c(5,5,5,1), cex.main = 1.5, cex.axis = 1.5, cex.lab = 1.5)
-  plot(yearsomega~t0.c, type = "n", main = "Latent trend: Total prevalence",
-       ylab = "# years needed for 60% increase", xlab = "Midpoint increase",
-       xlim = c(min(t0.c, 1850),max(t0.c,2050)), ylim = c(0,max(yearsomega, 250)))
-  text(perc/omega.c~t0.c, labels = country.info$code.c, col =1+as.numeric(country.info$reg.c))
-  legend("topleft", legend = region.info$name.reg.short, col = seq(2, 1+region.info$n.reg), lwd = 3, 
-         pch = 1, lty = -1)
-  plot(yearsomega~t0.c, type = "n", main = "Latent trend: Total prevalence",
-       ylab = "# years needed for 60% increase", xlab = "Midpoint increase",
-       xlim = c(min(t0.c, 1850),max(t0.c,2050)), ylim = c(0,max(yearsomega, 250)))
-  segments(t0.c, yearsomega.low, t0.c, yearsomega.up, col =1+as.numeric(country.info$reg.c))
-  segments(t0low, yearsomega, t0up, yearsomega, col =1+as.numeric(country.info$reg.c))
+  # par(mfrow = c(1,2),  mar = c(5,5,5,1), cex.main = 1.5, cex.axis = 1.5, cex.lab = 1.5)
+  # plot(yearsomega~t0.c, type = "n", main = "Latent trend: Total prevalence",
+  #      ylab = "# years needed for 60% increase", xlab = "Midpoint increase",
+  #      xlim = c(min(t0.c, 1850),max(t0.c,2050)), ylim = c(0,max(yearsomega, 250)))
+  # text(perc/omega.c~t0.c, labels = country.info$code.c, col =1+as.numeric(country.info$reg.c))
+  # legend("topleft", legend = region.info$name.reg.short, col = seq(2, 1+region.info$n.reg), lwd = 3, 
+  #        pch = 1, lty = -1)
+  # plot(yearsomega~t0.c, type = "n", main = "Latent trend: Total prevalence",
+  #      ylab = "# years needed for 60% increase", xlab = "Midpoint increase",
+  #      xlim = c(min(t0.c, 1850),max(t0.c,2050)), ylim = c(0,max(yearsomega, 250)))
+  # segments(t0.c, yearsomega.low, t0.c, yearsomega.up, col =1+as.numeric(country.info$reg.c))
+  # segments(t0low, yearsomega, t0up, yearsomega, col =1+as.numeric(country.info$reg.c))
   #----------------------------------------------------------------------------------
   par(mfrow = c(1,2),  mar = c(5,5,5,1), cex.main = 1.5, cex.axis = 1.5, cex.lab = 1.5)
   plot(yearsRomega~Rt0.c, type = "n", main = "Latent trend: Ratio",
@@ -549,7 +546,7 @@ PlotLogisticParameters <- function (# Plot overview of country parameters of the
        ylab = "# years needed for 60% increase", xlab = "Midpoint increase",
        xlim = c(min(Rt0.c, 1850),max(Rt0.c,2050)), ylim = c(0,max(yearsRomega, 250)))
   segments(Rt0.c, yearsRomega.low, Rt0.c, yearsRomega.up, col =1+as.numeric(country.info$reg.c))
-  segments(Rt0low, yearsRomega, t0up, yearsRomega, col =1+as.numeric(country.info$reg.c))
+  segments(Rt0low, yearsRomega, Rt0up, yearsRomega, col =1+as.numeric(country.info$reg.c))
   #----------------------------------------------------------------------------------
   # asymptotes
   par(mfrow = c(1,2),  mar = c(5,5,5,1), cex.main = 1.5, cex.axis = 1.5, cex.lab = 1.5)

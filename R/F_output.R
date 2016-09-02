@@ -156,6 +156,7 @@ GetCIs <- function (# Construct country-specific CIs
   years.ci <- winbugs.data$gett.ci 
   #------------------------------------------------------------
   # output: World level unmet parametric function for p.seq
+  # This will change to a spline if we update NC, 20160816
   if (!do.country.specific.run) {
     a.s <- c(mcmc.array.thin[, , "a.unmet"])
     b.s <- c(mcmc.array.thin[, , "b.unmet"])
@@ -196,12 +197,14 @@ GetCIs <- function (# Construct country-specific CIs
     Rstar.st <- InternalInternalGetTrajectoriesCountryRatStar(c = c, start.year = start.year, end.year = end.year,
                           mcmc.array = mcmc.array.thin)
     years.i <- years.ci[c,1:winbugs.data$N.unique.c[c]] # change JR, 20150301
+    year.totCP.i<-winbugs.data$year.est.c[c,1:winbugs.data$N.obsperiod.c[c]]
+    
     if (!include.AR){
       p.St <- pstar.st # here no resampling!
       R.St <- Rstar.st
     } else {
       # note: dimension s changes if nrepreatARsampling is >1!!!
-      p.str <- InternalGetTrajectoriesCountryTot(c = c, years.i = years.i, 
+      p.str <- InternalGetTrajectoriesCountryTot(c = c, years.i = year.totCP.i, 
                                                  start.year = start.year, end.year = end.year,
                                                  mcmc.array = mcmc.array.thin, 
                                                  do.country.specific.run = do.country.specific.run,
@@ -237,6 +240,7 @@ GetCIs <- function (# Construct country-specific CIs
     CIratio.Lg.Lcat.qt[[name.c[c]]][["Modern/Total"]] <- apply(R.St, 2, quantile, percentiles)
     CIstar.Lg.Lcat.qt[[name.c[c]]][["Modern/Total"]] <- apply(Rstar.st, 2, quantile, percentiles)
     #------------------------------------------------------------------------                                          
+    
     # Unmet
     if (!include.AR){
       theta.St <- matrix(0, n.s, nyears)
@@ -261,6 +265,8 @@ GetCIs <- function (# Construct country-specific CIs
                                              seed.country = seed.country*3) # change JR, 20140317
       theta.St <- apply(theta.str, 2, cbind)
     }
+    
+    
     unmet.intercept.s <- c(mcmc.array.thin[,,paste0("unmet.intercept.c[",c, "]")])
     unmet.intercept.S <- rep(unmet.intercept.s, nrepeatARsampling)
     for (t in 1:nyears) { 
@@ -363,6 +369,7 @@ GetCIs <- function (# Construct country-specific CIs
   ))
 }
 #----------------------------------------------------------------------------------
+####Function Change NC, 20160810
 InternalGetTrajectoriesCountryTot <- function(# Get trajectories for total
   ### Get trajectories for total by adding AR(1) to main trend
   ### using posterior samples of \code{eps.ci, rho.tot} and \code{sigma.tot}.
@@ -389,18 +396,70 @@ InternalGetTrajectoriesCountryTot <- function(# Get trajectories for total
     rho.tot <- rep(winbugs.data$rho.tot0, n.s)
     sigma.tot <- rep(winbugs.data$sigma.tot0, n.s)
   }
-  eps.str <- InternalGetARTrajectories(rho.s = rho.tot, 
+  
+  #Change NC, 20160810 
+  #Need to ensure that 1990 is in the estimation period because that is the year in which we fix the level
+  start.year.temp <- min(1985.5,start.year)
+  end.year.temp <- max(1995.5,end.year)
+  years.s<-seq(start.year.temp,end.year.temp)
+  
+  ##Function Change NC, 20160807
+  eps.str <- InternalGetTotCPARTrajectories(rho.s = rho.tot, 
                                        sigma.s = sigma.tot, 
                                        eps.is = eps.is, years.i = years.i, 
-                                       start.year = start.year, end.year = end.year,
+                                       start.year = start.year.temp, end.year = end.year.temp,
                                        nrepeatARsampling = nrepeatARsampling,
                                        seed.country = seed.country) # change JR, 20140317
-  #print(dim(eps.str))
-  pstar.str <- array(rep(pstar.st, nrepeatARsampling), c(dim(pstar.st), nrepeatARsampling)) # change JR, 20140317
-  logitp.str <- logit(pstar.str) + eps.str
-  p.str <- 1/(1+exp(-logitp.str))
+  nyears<-length(years.s)
+  year.start<-which(years.s==1990.5)
+  omega.s <- c(mcmc.array[, ,paste0("omega.c[", c, "]")])
+  setlevel.s <- c(mcmc.array[, , paste0("setlevel.c[", c, "]")])
+  pmax.s <- c(mcmc.array[, ,paste0("pmax.c[", c, "]")])
+  nsample<-length(pmax.s)
+  
+  p.str<-logitp.str<-ls.str<- array(NA, c(nsample, nyears))# Change NC, 20160807
+  
+    logitp.str[,year.start]<-setlevel.s
+    p.str[,year.start]<-1/(1+exp(-logitp.str[,year.start]))
+  
+    for(j in 1:nsample){  
+    for(k in (year.start-1):1)
+    {
+      ls.str[j,k]<-logitp.str[j,k+1]-eps.str[j,k,nrepeatARsampling]
+      
+    if(invlogit(ls.str[j,k])<pmax.s[j]) 
+      {
+        p.str[j,k]<-pmax.s[j]*(invlogit((logit(invlogit(ls.str[j,k])/pmax.s[j])-omega.s[j])))
+      }
+    else
+      {
+        p.str[j,k]=invlogit(ls.str[j,k])
+      }
+      
+      logitp.str[j,k]<-logit(p.str[j,k])
+    } 
+    
+    for(k in (year.start+1):nyears)
+    {
+      
+    if(p.str[j,k-1]<pmax.s[j]) 
+      {
+        logitp.str[j,k]<-logit(pmax.s[j]/(1+exp(-(logit(p.str[j,k-1]/pmax.s[j])+omega.s[j]))))+eps.str[j,k-1,nrepeatARsampling]
+      }
+    else
+      {
+        logitp.str[j,k]<-logit(p.str[j,k-1])+eps.str[j,k-1,nrepeatARsampling]
+      }
+      
+      p.str[j,k]<-1/(1+exp(-logitp.str[j,k])) 
+    } 
+  }
+    
+    select <- is.element(seq(start.year.temp, end.year.temp), seq(start.year, end.year))
+    p.str.final <- p.str[,select]
+ 
   ##value<< matrix with trajectories, dimension (no of posterior samples, length estimation period)
-  return(p.str)
+  return(p.str.final)
 }
 #----------------------------------------------------------------------------------------------
 InternalGetTrajectoriesCountryRat <- function(# Get trajectories for modern/total
@@ -462,6 +521,7 @@ InternalInternalGetTrajectoriesCountryRatStar <- function(# Get trajectories for
   return(Rstar.st)
 }
 #----------------------------------------------------------------------------------
+##Function Change NC, 20160816
 InternalInternalGetTrajectoriesCountryTotStar <- function(# Get trajectories for main trend in total
   ### Get trajectories for main trend in total
   c, ##<< Country index
@@ -470,15 +530,62 @@ InternalInternalGetTrajectoriesCountryTotStar <- function(# Get trajectories for
   end.year, ##<< Last year estimation period
   mcmc.array ##<< Object
 ){ 
+
+  #Need to ensure that 1990 is in the estimation period because that is the year in which we fix the level
+  start.year.temp <- min(1985.5,start.year)
+  end.year.temp <- max(1995.5,end.year)
+  years.s<-seq(start.year.temp,end.year.temp)
+  
+  nyears<-length(years.s)
+  year.start<-which(years.s==1990.5)
   omega.s <- c(mcmc.array[, ,paste0("omega.c[", c, "]")])
-  T.s <- c(mcmc.array[, , paste0("T.c[", c, "]")])
+  setlevel.s <- c(mcmc.array[, , paste0("setlevel.c[", c, "]")])
   pmax.s <- c(mcmc.array[, ,paste0("pmax.c[", c, "]")])
-  pstar.st <- pmax.s/(1+exp(-omega.s*(start.year  - T.s)))
-  for (year in (start.year+1):end.year){
-    pstar.st <- cbind(pstar.st, pmax.s/(1+exp(-omega.s*(year - T.s))))
-  }
+  nsample<-length(pmax.s)
+  
+  
+  pstar.st<-logitpstar.st<-lsstar.st<- array(NA, c(nsample, nyears)) # change JR, 20140317
+  
+  logitpstar.st[,year.start]<-setlevel.s
+  pstar.st[,year.start]<-1/(1+exp(-logitpstar.st[,year.start]))
+  
+    for(j in 1:nsample){
+    for(k in (year.start-1):1)
+      {
+        lsstar.st[j,k]<-logitpstar.st[j,k+1]
+    
+    if(invlogit(lsstar.st[j,k])<pmax.s[j]) 
+      {
+      pstar.st[j,k]<-pmax.s[j]*(invlogit((logit(invlogit(lsstar.st[j,k])/pmax.s[j])-omega.s[j])))
+      }
+    else
+      {
+      pstar.st[j,k]=invlogit(lsstar.st[j,k])
+      }
+    
+    logitpstar.st[j,k]<-logit(pstar.st[j,k])
+  } 
+  
+    for(k in (year.start+1):nyears)
+    {
+    
+    if(pstar.st[j,k-1]<pmax.s[j]) 
+      {
+      logitpstar.st[j,k]<-logit(pmax.s[j]/(1+exp(-(logit(pstar.st[j,k-1]/pmax.s[j])+omega.s[j]))))
+      }
+    else
+      {
+      logitpstar.st[j,k]<-logit(pstar.st[j,k-1])
+      }
+    
+    pstar.st[j,k]<-1/(1+exp(-logitpstar.st[j,k])) 
+  } 
+}
+  select <- is.element(seq(start.year.temp, end.year.temp), seq(start.year, end.year))
+  pstar.st.final <- pstar.st[,select]
+  
   ##value<< matrix with trajectories, dimension (no of posterior samples, length estimation period)
-  return(pstar.st)
+  return(pstar.st.final)
 }
 #----------------------------------------------------------------------------------------------
 InternalGetARTrajectories <- function( # Construct AR(1) trajectories
@@ -582,15 +689,81 @@ InternalGetARTrajectories <- function( # Construct AR(1) trajectories
   ## where r is the number of repeated AR trajectories for the same posterior sample
 }
 
-# eps <- InternalGetARTrajectories(
-#   rho.s = c(0.5,0.5),
-#   sigma.s= c(0.5,0.5),
-#   eps.is = matrix(c(1,1), 1,2),
-#   years.i = 2,
-#   start.year = 0,
-#   end.year = 3,
-#   nrepeatARsampling=1)
-# eps[1,1,1]
+####Function added NC, 20160810
+InternalGetTotCPARTrajectories <- function( # Construct AR(1) trajectories
+  ### Construct posterior sample of AR(1) trajectories, given samples at (unequally spaced) time points
+  rho.s, ##<< Posterior sample of autoregressive parameter
+  sigma.s, ##<< Posterior sample of autoregressive sd
+  eps.is, ##<< Posterior sample of AR(1) for obs years i=1,..., I
+  years.i, ##<< Obs years i=1,..., I
+  start.year, ##<< First year where posterior sample is needed
+  end.year,##<< Last year where posterior sample is needed
+  nrepeatARsampling, ##<< How many AR-trajectories to sample?
+  seed.country ##<< Seed used for country
+){
+  ###  Note: years.i and start/end year are centered at midpoint calendar year
+  nsample <- length(rho.s)
+  # Note: some obs years could be before start year or after end year
+  # Don't throw them out because they inform the eps in start/end year
+  # Inefficient but simple coding: 
+  # first construct eps from min(years.i,start year) to max(years.i, end year)
+  # then select the years we need
+  start.year.temp <- min(years.i,start.year)
+  end.year.temp <- max(years.i,end.year)
+  nyears <- end.year.temp - start.year.temp + 1
+  #eps.st <- matrix(NA, nsample, nyears)
+  obs.years.indices <- years.i - start.year.temp + 1
+  n <- length(obs.years.indices)
+  
+  # create nrepeatARsampling trajectories for each posterior sample
+  eps.str <- array(NA, c(nsample, nyears, nrepeatARsampling))
+  
+  # add posterior samples from MCMC
+  for (i in 1:n){
+    for (r in 1:nrepeatARsampling){
+      eps.str[,obs.years.indices[i],r] <- eps.is[i,]
+    }
+  }
+  
+  # SAMPLING STARTS
+  # create nrepeatARsampling trajectories for each posterior sample
+  # speed all this up!?
+  
+  set.seed(seed.country*200) # change JR, 20140317
+  # add samples at start
+  if (obs.years.indices[1] > 1){
+    for (k in seq(obs.years.indices[1]-1,1,-1)){
+      for (r in 1:nrepeatARsampling){
+        eps.str[,k,r] <- rnorm(nsample,rho.s*eps.str[,k+1,r], sigma.s) 
+      }
+    }
+  }
+  
+  set.seed(seed.country*300) # change JR, 20140317
+  # add samples at end
+  if (obs.years.indices[n] < nyears){
+    for (k in (obs.years.indices[n]+1):nyears){
+      for (r in 1:nrepeatARsampling){
+        eps.str[,k,r] <- rnorm(nsample,rho.s*eps.str[,k-1,r], sigma.s) 
+      }
+    }  
+  }
+  
+
+  select <- is.element(seq(start.year.temp, end.year.temp), seq(start.year, end.year))
+  if (nrepeatARsampling!=1){
+    eps.str.final <- eps.str[,select,]
+  } else {
+    eps.str.final <- array(eps.str[,select,], c(dim(eps.str[,select,]),1))
+  }
+  #print(dim(eps.str.final))
+  # note: the 3rd dimension is still lost when repeat=1                       
+  return(eps.str.final)
+  ##value<<
+  ## matrix of size $s$ times $t$ for years (start.year:end.year) time $r$
+  ## where r is the number of repeated AR trajectories for the same posterior sample
+}
+
 #----------------------------------------------------------------------------------
 GetParInfo <- function(# Get percentiles of parameters of logistics for total and ratio modern/total
   ### Get (2.5%, 50%, 97.5%) percentiles of parameters of logistics for total and ratio modern/total
@@ -611,7 +784,6 @@ GetParInfo <- function(# Get percentiles of parameters of logistics for total an
   }
   dimnames(par.ciq) <- list(country.info$name.c, parnames.list$parnames.c, percentiles.names)
   par.ciq[,"RT.c",] <- par.ciq[,"RT.c",]
-  par.ciq[,"T.c",] <- par.ciq[,"T.c",] 
   ##value<< 3-dimensional array with entries (no of countries, 6 logistic parameters, percentiles)
   ## (with names for each dimension)
   return(par.ciq)

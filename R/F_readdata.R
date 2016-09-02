@@ -113,11 +113,12 @@ ReadDataAll <- function(# Read contraceptive prevalence data
     print(paste("Summary stats written to", html.file))
   }
   if (is.null(data.csv)){
-    data.csv <- file.path(.find.package("ContraceptiveUse"), "data", "dataCPmodel.csv")
+    data.csv <- file.path(find.package("ContraceptiveUse"), "data", "dataCPmodel.csv")
   }  
   cat(paste("CP data read from", data.csv), "\n")
   if (is.null(regioninfo.csv)){
-    regioninfo.csv <- file.path(.find.package("ContraceptiveUse"), "data", "Country-and-area-classification.csv")
+    regioninfo.csv <- file.path(find.package("ContraceptiveUse"), "data", "Country-and-area-classification.csv")
+    
   }
   cat(paste("Country/region info read from", regioninfo.csv), "\n")
   #----------------------------------------------------------------------
@@ -173,7 +174,7 @@ ReadDataAll <- function(# Read contraceptive prevalence data
   options(warn=0) # back to default setting
   age.cat.j <- ifelse(Age == "See notes", "+", age.cat.j)
   if (!is.null(html.file)){
-    print(xtable(xtabs(~Age+age.cat.j), digits = c(0,0,0,0,0), type = "html", 
+    print(xtable(xtabs(~Age+age.cat.j), digits = c(0,0,0,0), type = "html", 
           caption = "Age"), type="html", file = html.file, append = T)
     print(xtable(table(age.cat.j), digits = c(0,0), type = "html", 
           caption = "Age"), type="html", file = html.file, append = T)

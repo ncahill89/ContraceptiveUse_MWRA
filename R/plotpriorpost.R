@@ -22,7 +22,7 @@ PlotPriorPost <- function(# Plot posteriors and priors for hyper parameters
     pdf(file.path(fig.dir, paste0(run.name, "priorpost_all.pdf")), width = 10, height = 10)
     #----------------------------------------------------------------------------------
     # prior and posteriors of kappas (variances in the BHMs for logistic curves) and two more gammas
-    parnames <- c("sigma.wc", "sigma.Rwc", "sigma.lpc", "sigma.lrc", "sigma.RTc")
+    parnames <- c("sigma.wc", "sigma.Rwc", "sigma.lpc", "sigma.lrc", "sigma.Sc","sigma.RTc")
     rateforparnames <- unlist(mcmc.meta$winbugs.data[c(
       "halfnu0sigma2.wc0","halfnu0sigma2.Rwc0",
       "halfnu0sigma2.lpc0", "halfnu0sigma2.lrc0", 
