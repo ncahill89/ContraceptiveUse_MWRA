@@ -1139,17 +1139,14 @@ GetBugsPriorSpecs <- function( #Set priors parameters
       tau.b0 = tau.b0)
   } else { # change JR, 20131104
     mcmc.post <- data.global$mcmc.post
-    load(file.path(getwd(), "output/",run.name.global,"/post.ratecp.rda")) #Temporary change, NC 2060807
-    
+
     
     prior.list1 <- list(
-      #rho.tot0 = mcmc.post$rho.tot,
-      #sigma.tot0 = mcmc.post$sigma.tot,
-      rho.tot0=post.ratecp$rho.tot, #Temporary Change NC, 20160807
-      sigma.tot0=post.ratecp$sigma.ar.tot, #Temporary Change NC, 20160807
+      rho.tot0 = mcmc.post$rho.tot,
+      sigma.tot0 = mcmc.post$sigma.tot,
       rho.rat0 = mcmc.post$rho.rat,
       sigma.rat0 = mcmc.post$sigma.rat,      
-      lp.world0 = post.ratecp$lp.world, #Temporary Change NC, 20160809
+      lp.world0 = mcmc.post$lp.world, #Temporary Change NC, 20160809
       lr.world0 = mcmc.post$lr.world,
       rho.unmet0 = mcmc.post$rho.unmet,
       sigma.ar.unmet0 = mcmc.post$sigma.ar.unmet,
@@ -1184,10 +1181,10 @@ GetBugsPriorSpecs <- function( #Set priors parameters
         subreg.global <- which(data.global$name.subreg == name.subreg)
         prior.list1 <- c(prior.list1, list(
           unmet.subreg0 = mcmc.post[[paste0("unmet.subreg[", subreg.global, "]")]],
-          w.subreg0 = post.ratecp$w.subreg[subreg.global], #Temporary Change NC, 20160807
+          w.subreg0 = mcmc.post[[paste0("w.subreg[", subreg.global, "]")]], 
           Rw.subreg0 = mcmc.post[[paste0("Rw.subreg[", subreg.global, "]")]],
           RT.subreg0 = mcmc.post[[paste0("RT.subreg[", subreg.global, "]")]],
-          S.subreg0= post.ratecp$S.subreg[subreg.global] #Temporary Change NC, 20160807
+          S.subreg0= mcmc.post[[paste0("S.subreg[", subreg.global, "]")]] #Change NC 20160907
         ))
       } else { # for subpopulation-specific run
         country.global <- which(data.global$iso.c == iso.country.select) 
@@ -1195,7 +1192,9 @@ GetBugsPriorSpecs <- function( #Set priors parameters
           unmet.subreg0 = mcmc.post[[paste0("unmet.intercept.c[", country.global, "]")]],
           w.subreg0 = LogitMinMax(mcmc.post[[paste0("omega.c[", country.global, "]")]], 0.01, 0.5),
           Rw.subreg0 = LogitMinMax(mcmc.post[[paste0("Romega.c[", country.global, "]")]], 0.01, 0.5),
-          RT.subreg0 = mcmc.post[[paste0("RT.c[", country.global, "]")]]
+          RT.subreg0 = mcmc.post[[paste0("RT.c[", country.global, "]")]],
+          S.subreg0 = mcmc.post[[paste0("setlevel.c[", country.global, "]")]] #Change NC 20160907
+          
         ))
       }
       if (change.priors.to.zerolower) {
@@ -1205,16 +1204,17 @@ GetBugsPriorSpecs <- function( #Set priors parameters
           sigma.wc0 = mcmc.post$sigma.wc,
           sigma.Rwc0 = mcmc.post$sigma.Rwc,
           sigma.RTc0 = mcmc.post$sigma.RTc,
-          sigma.unmetc0 = mcmc.post$sigma.unmetc))
+          sigma.unmetc0 = mcmc.post$sigma.unmetc,
+          sigma.Sc0 = mcmc.post$sigma.Sc))
       } else {
         prior.list1 <- c(prior.list1, list(
           tau.unmetc0 = 1/(mcmc.post$sigma.unmetc^2),
-          tau.lpc0 = post.ratecp$tau.lpc,#Temporary Change NC, 20160809
+          tau.lpc0 = 1/(mcmc.post$sigma.lpc^2),
           tau.lrc0 = 1/(mcmc.post$sigma.lrc^2),
-          tau.wc0 = post.ratecp$tau.wc, #Temporary Change NC, 20160809
+          tau.wc0 = 1/(mcmc.post$sigma.wc^2), 
           tau.Rwc0 = 1/(mcmc.post$sigma.Rwc^2),
           tau.RTc0 = 1/(mcmc.post$sigma.RTc^2)),
-          tau.Sc0 = post.ratecp$tau.Sc) #Temporary Change NC, 20160809
+          tau.Sc0 = 1/(mcmc.post$sigma.Sc^2))
       }
     } else { # change JR, 20150301
       reg.global <- which(data.global$name.reg == name.reg)
@@ -1223,9 +1223,11 @@ GetBugsPriorSpecs <- function( #Set priors parameters
         w.reg0 = mcmc.post[[paste0("w.reg[", reg.global, "]")]],
         Rw.reg0 = mcmc.post[[paste0("Rw.reg[", reg.global, "]")]],
         RT.reg0 = mcmc.post[[paste0("RT.reg[", reg.global, "]")]],
+        S.reg0 = mcmc.post[[paste0("S.reg[", reg.global, "]")]],
         sigma.wsubreg0 = mcmc.post[["sigma.wsubreg"]],
         sigma.Rwsubreg0 = mcmc.post[["sigma.Rwsubreg"]],
-        sigma.RTsubreg0 = mcmc.post[["sigma.RTsubreg"]]
+        sigma.RTsubreg0 = mcmc.post[["sigma.RTsubreg"]],
+        sigma.Ssubreg0 = mcmc.post[["sigma.Ssubreg"]]
       ))
     }
   }
@@ -1340,7 +1342,7 @@ GetParNames <- function(# Get list of parnames
                     "sigma.wc", "sigma.Rwc", "sigma.Sc", "sigma.RTc",
                     # the following parameters are not found in WriteCountryModel at all
                     "sigma.unmetworld", 
-                    "w.world", "Rw.world", "RT.world",
+                    "w.world", "Rw.world", "RT.world","S.world",
                     "sigma.wreg", "sigma.Rwreg", "sigma.RTreg","sigma.Sreg",
                     "sigma.wsubreg", "sigma.Rwsubreg", "sigma.RTsubreg","sigma.Ssubreg")
     parnames.reg <- c(parnames.reg, "w.reg","Rw.reg","RT.reg","S.reg")

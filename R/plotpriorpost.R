@@ -18,20 +18,19 @@ PlotPriorPost <- function(# Plot posteriors and priors for hyper parameters
   load(file.path(output.dir, "mcmc.meta.rda")) # change JR, 20140418
   load(file.path(output.dir, "mcmc.array.rda")) # change JR, 20140418
   
-  if (!mcmc.meta$general$do.country.specific.run) { # for global run
-    pdf(file.path(fig.dir, paste0(run.name, "priorpost_all.pdf")), width = 10, height = 10)
+  pdf(file.path(fig.dir, paste0(run.name, "priorpost_all.pdf")), width = 10, height = 10)
+   if (!mcmc.meta$general$do.country.specific.run) { # for global run
     #----------------------------------------------------------------------------------
     # prior and posteriors of kappas (variances in the BHMs for logistic curves) and two more gammas
-    parnames <- c("sigma.wc", "sigma.Rwc", "sigma.lpc", "sigma.lrc", "sigma.Sc","sigma.RTc")
+    parnames <- c("sigma.Rwc", "sigma.lrc","sigma.RTc")
     rateforparnames <- unlist(mcmc.meta$winbugs.data[c(
-      "halfnu0sigma2.wc0","halfnu0sigma2.Rwc0",
-      "halfnu0sigma2.lpc0", "halfnu0sigma2.lrc0", 
+      "halfnu0sigma2.Rwc0", "halfnu0sigma2.lrc0", 
       "halfnu0sigma2.RTc0" )])
     
     par(mfrow = c(1,1))
     if (mcmc.meta$general$change.priors.to.zerolower){ # unif priors
       # priors not implemented
-      for (parname in c(parnames, "sigma.Tc", "sigma.earlierTc","sigma.unmetc")) {
+      for (parname in c(parnames,"sigma.unmetc")) {
         PlotPostOnly(post.samp =  c(mcmc.array[,,parname]), parname = parname)  
       }
     } else { # gamma priors
@@ -49,18 +48,13 @@ PlotPriorPost <- function(# Plot posteriors and priors for hyper parameters
                                  priorrate = mcmc.meta$winbugs.data$halfsigma2.unmetc0,
                                  parname = parname)  
       }
-      for (parname in "sigma.earlierTc"){
-        PlotPostSDWithGammaPrior(post.samp =  c(mcmc.array[,,parname]), 
-                                 priorshape =  mcmc.meta$winbugs.data$halfnu0_rich, 
-                                 priorrate = mcmc.meta$winbugs.data$halfnu0_rich_sigma2.earlierTc0,
-                                 parname = parname)  
+      for (parname in c("sigma.wc","sigma.lpc", "sigma.Sc")){
+        PlotPostWithUnifPrior(post.samp=  c(mcmc.array[,,parname]),
+                              priorlow = 0, priorup = 3, parname = parname)
       }
-      for (parname in "sigma.Tc"){
-        PlotPostSDWithGammaPrior(post.samp =  c(mcmc.array[,,parname]), 
-                                 priorshape =  mcmc.meta$winbugs.data$halfnu0_poor, 
-                                 priorrate = mcmc.meta$winbugs.data$halfnu0_poor_sigma2.Tc0,
-                                 parname = parname)  
-      }
+      
+
+ 
     }
     #----------------------------------------------------------------------------------
     # other gammas, with shape 0.5
@@ -148,19 +142,19 @@ PlotPriorPost <- function(# Plot posteriors and priors for hyper parameters
                               priormean = -1, priorsd = 1/sqrt(0.01), parname = parname) 
     }
     
-    parnames <-c("RT.world", "T.world", "Tearlier")
-    means <- unlist(mcmc.meta$winbugs.data[c("mean.RTworld", "mean.Tworld", "mean.Tearlier")])
+    parnames <-c("RT.world")
+    means <- unlist(mcmc.meta$winbugs.data[c("mean.RTworld")])
     p <- 0
     for (parname in  parnames){
       p <- p+1
       PlotPostWithNormalPrior(post.samp=  c(mcmc.array[,,parname]),
-                              priormean = means[p], priorsd = 1/sqrt(mcmc.meta$winbugs.data$tau0.T), parname = parname) 
+                              priormean = means[p], priorsd = 1/sqrt(mcmc.meta$winbugs.data$tau0.RT), parname = parname) 
     }
     par(mfrow = c(2,2))
-    parnames <-c("sigma.RTreg", "sigma.Treg", "sigma.RTsubreg", "sigma.Tsubreg")
+    parnames <-c("sigma.RTreg", "sigma.RTsubreg","sigma.Ssubreg")
     for (parname in  parnames){
       PlotPostWithUnifPrior(post.samp=  c(mcmc.array[,,parname]),
-                            priorlow = 0, priorup = mcmc.meta$winbugs.data$sigmaTregsubreg.upper, 
+                            priorlow = 0, priorup = mcmc.meta$winbugs.data$sigmaRTregsubreg.upper, 
                             parname = parname) 
     }
     par(mfrow = c(2,2))
@@ -227,7 +221,6 @@ PlotPriorPost <- function(# Plot posteriors and priors for hyper parameters
       PlotPostWithNormalPrior(post.samp=  c(mcmc.array[,,parname]),
                               priormean = means[p], priorsd = sds[p], parname = parname) 
     }
-    dev.off()
   } else { # for country-specific run
     #--------------------------------------------------------------------------
     #parname <- "bias.modern"
@@ -244,7 +237,9 @@ PlotPriorPost <- function(# Plot posteriors and priors for hyper parameters
     #  }     
     #  dev.off()
     #}
+    
   }
+  dev.off()
   #--------------------------------------------------------------------------
   
   #--------------------------------------------------------------------------

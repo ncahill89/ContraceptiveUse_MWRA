@@ -1,6 +1,7 @@
 #----------------------------------------------------------------------
 # summariseglobalrun.R
 # Jin Rou New, Nov 2013
+# Modified, NC 2016
 #----------------------------------------------------------------------
 SummariseGlobalRun <- function(# Summarise info from global run required for country-specific runs
   ### Summarise info from global run required for country-specific runs
@@ -21,7 +22,7 @@ SummariseGlobalRun <- function(# Summarise info from global run required for cou
                         paste0(parnames.list$T1.source.s, "[", 1:4, "]"),
                         paste0(parnames.list$T2.source.s, "[", 1:4, "]"),
                         paste0(parnames.list$T12.source.s, "[", 1:4, "]"),
-                        c(sapply(c("unmet.intercept.c", "S.c", "RT.c",
+                        c(sapply(c("unmet.intercept.c", "setlevel.c", "RT.c",
                                  "omega.c", "Romega.c"), paste0, "[", 1:mcmc.meta$winbugs.data$C, "]")))                        
   parnames.not.to.save <- c("w.world", "Rw.world", "S.world", "RT.world",
                             "sigma.wreg", "sigma.Rwreg", "sigma.Sreg", "sigma.RTreg"
