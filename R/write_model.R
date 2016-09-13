@@ -48,14 +48,10 @@ for(c in 1:C){
 ##N.unique.c is a vector containing the number of observations per country
 for (z in 1:n.countriesmorethan1obs){
   for (i in 2:N.unique.c[getc.z[z]]){ 
-      thetahat.ci[getc.z[z],i] <- theta.ci[getc.z[z],i-1]*
-      pow(rho.unmet, gett.ci[getc.z[z],i] - gett.ci[getc.z[z],i-1])
-      etahat.ci[getc.z[z],i] <- eta.ci[getc.z[z],i-1]*
-      pow(rho.rat, gett.ci[getc.z[z],i] - gett.ci[getc.z[z],i-1])
-      tautheta.ci[getc.z[z],i] <- tau.unmet.st/
-      (1-pow(rho.unmet, 2*(gett.ci[getc.z[z],i] - gett.ci[getc.z[z],i-1])))
-      taueta.ci[getc.z[z],i] <- tau.rat.st/
-      (1-pow(rho.rat, 2*(gett.ci[getc.z[z],i] - gett.ci[getc.z[z],i-1])))
+      thetahat.ci[getc.z[z],i] <- theta.ci[getc.z[z],i-1]*pow(rho.unmet, gett.ci[getc.z[z],i] - gett.ci[getc.z[z],i-1])
+      etahat.ci[getc.z[z],i] <- eta.ci[getc.z[z],i-1]*pow(rho.rat, gett.ci[getc.z[z],i] - gett.ci[getc.z[z],i-1])
+      tautheta.ci[getc.z[z],i] <- tau.unmet.st/(1-pow(rho.unmet, 2*(gett.ci[getc.z[z],i] - gett.ci[getc.z[z],i-1])))
+      taueta.ci[getc.z[z],i] <- tau.rat.st/(1-pow(rho.rat, 2*(gett.ci[getc.z[z],i] - gett.ci[getc.z[z],i-1])))
       
       ##Index e.g., Country 1 obs 2, Counrty 1 obs 3....
       theta.ci[getc.z[z],i] ~ dnorm(thetahat.ci[getc.z[z],i], tautheta.ci[getc.z[z],i])
@@ -131,14 +127,14 @@ unmet.intercept.c[C+1] <- 0
       # getest.j gives the locations of the observations years in the entire observation period. 
       # For anything that includes p.ci use the index getest.j instead of geti.j
       for (j in 1:J){ 
-      trad.j[j] <- p.ci[getc.j[j], getest.j[j]] * (1-R.ci[getc.j[j], geti.j[j]]) #Change NC, 20160811
-      modern.j[j] <- p.ci[getc.j[j], getest.j[j]] * (R.ci[getc.j[j], geti.j[j]]) #Change NC, 20160811
+      trad.j[j] <- p.ci[getc.j[j], getest.j[j]]*(1-R.ci[getc.j[j], geti.j[j]]) #Change NC, 20160811
+      modern.j[j] <- p.ci[getc.j[j], getest.j[j]]*(R.ci[getc.j[j], geti.j[j]]) #Change NC, 20160811
       
       unmet.j[j] <- (1-p.ci[getc.j[j], getest.j[j]])/(1+exp(-logitZ.j[j])) #Change NC, 20160811
       logitZstar.j[j] <- (
       unmet.intercept.c[getc.j[j]]
       + a.unmet 
-      + b.unmet * (p.ci[getc.j[j], getest.j[j]] - pmid.for.unmet) #Change NC, 20160811
+      + b.unmet*(p.ci[getc.j[j], getest.j[j]] - pmid.for.unmet) #Change NC, 20160811
       + c.unmet*pow(p.ci[getc.j[j], getest.j[j]] - pmid.for.unmet,2)) #Change NC, 20160811
       # logitZ.j defined in AR-loop, just adding theta
       
@@ -148,18 +144,18 @@ unmet.intercept.c[C+1] <- 0
       
       ###trad.j, modern.j and unmet.j defined at the end. 
       p.perturb.ij[1,j] <-  trad.j[j]*Vtrad.j[j]/sump.j[j]
-      p.perturb.ij[2,j] <-  modern.j[j]* Vmodern.j[j]/sump.j[j]
+      p.perturb.ij[2,j] <-  modern.j[j]*Vmodern.j[j]/sump.j[j]
       p.perturb.ij[3,j] <- unmet.j[j]/sump.j[j]
       p.perturb.ij[4,j] <- (1- trad.j[j] - modern.j[j] - unmet.j[j])/sump.j[j]
       
       ###Biases
       ##Inclusion of folk methods
-      folkbias.j[j] <- step(folk.ind1.j[j]-0.5)*v.folk* p.perturb.ij[3,j]
+      folkbias.j[j] <- step(folk.ind1.j[j]-0.5)*v.folk*p.perturb.ij[3,j]
       ##Absence of probing
-      micsbias.j[j] <- step(source.MICS.ind1.j[j]-0.5)* v.mics * p.perturb.ij[1,j]
+      micsbias.j[j] <- step(source.MICS.ind1.j[j]-0.5)*v.mics*p.perturb.ij[1,j]
       ##Sterilization 
-      modposbias.j[j] <- step(mpos.ind1.j[j]-0.5)*v.mpos* p.perturb.ij[4,j]
-      modnegbias.j[j] <- step(mneg.ind1.j[j]-0.5)*v.mneg * p.perturb.ij[2,j]
+      modposbias.j[j] <- step(mpos.ind1.j[j]-0.5)*v.mpos*p.perturb.ij[4,j]
+      modnegbias.j[j] <- step(mneg.ind1.j[j]-0.5)*v.mneg*p.perturb.ij[2,j]
       
       ####Perturbed proportions adjusted for biases (1-4)
       q.ij[1,j] <- p.perturb.ij[1,j] - micsbias.j[j] + folkbias.j[j]
@@ -173,24 +169,24 @@ unmet.intercept.c[C+1] <- 0
       mu.jn[j,2] <- log(max(0.01, q.ij[2,j])/none.adj.j[j])
       
       Vtrad.j[j] <- (
-      V.geo.12i[1,geo.ind.j[j]] 
-      * V.age.12i[1,age.ind.j[j]] 
-      * V.hw.12i[1,hw.ind.j[j]] 
-      * V.emal.12i[1,emal.ind.j[j]] 
-      * V.sa.12i[1,sa.ind.j[j]]
-      * V.posbias.12i[1,posbias.ind.j[j]]
-      * V.posage.12i[1, posage.ind.j[j]]
-      * V.negage.12i[1, negage.ind.j[j]] )
+      V.geo.12i[1,geo.ind.j[j]]
+      *V.age.12i[1,age.ind.j[j]]
+      *V.hw.12i[1,hw.ind.j[j]]
+      *V.emal.12i[1,emal.ind.j[j]]
+      *V.sa.12i[1,sa.ind.j[j]]
+      *V.posbias.12i[1,posbias.ind.j[j]]
+      *V.posage.12i[1, posage.ind.j[j]]
+      *V.negage.12i[1, negage.ind.j[j]] )
       
       Vmodern.j[j] <- (
       V.geo.12i[2,geo.ind.j[j]]  ##geographical region
-      * V.age.12i[2,age.ind.j[j]] #Age group different from base (bias unknown)
-      * V.hw.12i[2,hw.ind.j[j]] ##Husband and wives or both
-      * V.emal.12i[2,emal.ind.j[j]] ##Ever married, all women
-      * V.sa.12i[2,sa.ind.j[j]] ##All sexually active
-      * V.posbias.12i[2,posbias.ind.j[j]] ## Non-pregnant/fertile/married SA women
-      * V.posage.12i[2, posage.ind.j[j]] ##Age group with positive bias
-      * V.negage.12i[2, negage.ind.j[j]] ##Age group with negative bias
+      *V.age.12i[2,age.ind.j[j]] #Age group different from base (bias unknown)
+      *V.hw.12i[2,hw.ind.j[j]] ##Husband and wives or both
+      *V.emal.12i[2,emal.ind.j[j]] ##Ever married, all women
+      *V.sa.12i[2,sa.ind.j[j]] ##All sexually active
+      *V.posbias.12i[2,posbias.ind.j[j]] ## Non-pregnant/fertile/married SA women
+      *V.posage.12i[2, posage.ind.j[j]] ##Age group with positive bias
+      *V.negage.12i[2, negage.ind.j[j]] ##Age group with negative bias
       )
       
   T.j[j,1:2, 1:2] <- T.s[ifelse(source.ind.j[j] == 5, 4, source.ind.j[j]),,] 
